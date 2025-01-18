@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// frontend/src/Components/Social.js
+import React, { useState, useEffect } from 'react';
 import { Button, TextField, Typography, Card, CardContent, CardActions, IconButton, Box, Divider } from '@mui/material';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import CommentIcon from '@mui/icons-material/Comment';
@@ -6,12 +7,25 @@ import CommentIcon from '@mui/icons-material/Comment';
 function Social() {
   const [posts, setPosts] = useState([]);
   const [newPostContent, setNewPostContent] = useState("");
-  const [userName, setUserName] = useState(""); // New state for username
-  const [newComment, setNewComment] = useState(""); // New state for comment input
-  const [selectedPostId, setSelectedPostId] = useState(null); // Track the post for adding comments
+  const [userName, setUserName] = useState("");
+  const [newComment, setNewComment] = useState("");
+  const [selectedPostId, setSelectedPostId] = useState(null);
+
+  // Fetch posts from the backend API
+  useEffect(() => {
+    fetch('http://localhost:5000/api/posts')
+      .then(response => response.json())
+      .then(data => setPosts(data));
+  }, []);
 
   const handleLike = (postId) => {
-    setPosts(posts.map(post => post.id === postId ? { ...post, likes: post.likes + 1 } : post));
+    fetch(`http://localhost:5000/api/posts/${postId}/like`, {
+      method: 'PUT',
+    })
+      .then(response => response.json())
+      .then(updatedPost => {
+        setPosts(posts.map(post => post.id === postId ? updatedPost : post));
+      });
   };
 
   const handleNewPost = () => {
@@ -19,9 +33,17 @@ function Social() {
       alert("Both username and post content are required!");
       return;
     }
-    const newPost = { id: posts.length + 1, userName, content: newPostContent, likes: 0, comments: [] };
-    setPosts([...posts, newPost]);
-    setNewPostContent(""); // Clear input after posting
+
+    fetch('http://localhost:5000/api/posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userName, content: newPostContent })
+    })
+      .then(response => response.json())
+      .then(newPost => {
+        setPosts([...posts, newPost]);
+        setNewPostContent("");
+      });
   };
 
   const handleAddComment = (postId) => {
@@ -29,13 +51,17 @@ function Social() {
       alert("Comment cannot be empty!");
       return;
     }
-    setPosts(posts.map(post => {
-      if (post.id === postId) {
-        return { ...post, comments: [...post.comments, newComment] };
-      }
-      return post;
-    }));
-    setNewComment(""); // Clear comment input after adding
+
+    fetch(`http://localhost:5000/api/posts/${postId}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ comment: newComment })
+    })
+      .then(response => response.json())
+      .then(updatedPost => {
+        setPosts(posts.map(post => post.id === postId ? updatedPost : post));
+        setNewComment("");
+      });
   };
 
   return (
@@ -44,7 +70,6 @@ function Social() {
         Social Feed
       </Typography>
 
-      {/* Input for username */}
       <TextField
         label="Enter your username"
         variant="outlined"
@@ -54,7 +79,6 @@ function Social() {
         sx={{ marginBottom: 2 }}
       />
 
-      {/* Input for post content */}
       <TextField
         label="Write a new post"
         variant="outlined"
@@ -81,7 +105,6 @@ function Social() {
         Post
       </Button>
 
-      {/* Render posts */}
       {posts.map(post => (
         <Card key={post.id} sx={{ marginTop: 3, borderRadius: 2, border: '1px solid #ddd', backgroundColor: '#f9f9f9' }}>
           <CardContent sx={{ padding: 3 }}>
@@ -100,13 +123,11 @@ function Social() {
               <ThumbUpIcon />
             </IconButton>
 
-            {/* Comment Icon */}
             <IconButton color="secondary" onClick={() => setSelectedPostId(post.id)} sx={{ marginLeft: 2 }}>
               <CommentIcon />
             </IconButton>
           </CardActions>
 
-          {/* Comment Input field when comment icon is clicked */}
           {selectedPostId === post.id && (
             <Box sx={{ paddingLeft: 3, paddingBottom: 2, marginTop: 2 }}>
               <TextField
@@ -128,7 +149,6 @@ function Social() {
             </Box>
           )}
 
-          {/* Comments section */}
           <Divider sx={{ margin: '20px 0' }} />
           <Box sx={{ paddingLeft: 3, paddingBottom: 2 }}>
             <Typography variant="h6">Comments:</Typography>
