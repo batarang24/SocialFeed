@@ -4,7 +4,7 @@ const mysql = require('mysql2');
 const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
-    password: ' ', // Enter your MySQL root password
+    password: '1234', // Enter your MySQL root password
     database: 'social_feed',   // Database name
 });
 

@@ -1,71 +1,114 @@
-
 const express = require('express');
-const cors = require('cors');
 const bodyParser = require('body-parser');
+const cors = require('cors');
+const db = require('./db'); // Import the MySQL connection
 
 const app = express();
-const port = 5000;
+app.use(bodyParser.json());
+app.use(cors());
 
-app.use(cors()); 
-app.use(bodyParser.json()); 
+// Route to fetch all posts
+app.get('/api/posts', async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT posts.*, users.username 
+       FROM posts 
+       JOIN users ON posts.user_id = users.id 
+       ORDER BY posts.id DESC`
+    );
+    res.json(rows); // Send the posts with username to the client
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error fetching posts.');
+  }
+});
 
-let posts = [];
-
-
-app.post('/api/posts', (req, res) => {
+// Route to add a new post
+app.post('/api/posts', async (req, res) => {
   const { userName, content } = req.body;
+
   if (!userName || !content) {
-    return res.status(400).json({ message: "Username and content are required." });
+    return res.status(400).send('Username and content are required.');
   }
-  
-  const newPost = {
-    id: posts.length + 1,
-    userName,
-    content,
-    likes: 0,
-    comments: [],
-  };
-  
-  posts.push(newPost);
-  res.status(201).json(newPost);
-});
 
-// GET: Retrieve all posts
-app.get('/api/posts', (req, res) => {
-  res.json(posts);
-});
+  try {
+    // Check if the user already exists and get the user ID
+    const [userResult] = await db.query(
+      'SELECT id FROM users WHERE username = ?',
+      [userName]
+    );
 
-// PUT: Like a post
-app.put('/api/posts/:id/like', (req, res) => {
-  const postId = parseInt(req.params.id);
-  const post = posts.find(post => post.id === postId);
-  if (!post) {
-    return res.status(404).json({ message: "Post not found." });
+    let userId;
+    if (userResult.length === 0) {
+      // If the user doesn't exist, insert a new user
+      const [newUserResult] = await db.query(
+        'INSERT INTO users (username) VALUES (?)',
+        [userName]
+      );
+      userId = newUserResult.insertId; // Get the new user's ID
+    } else {
+      userId = userResult[0].id; // Get the existing user's ID
+    }
+
+    // Insert the new post with the userId
+    const [result] = await db.query(
+      'INSERT INTO posts (user_id, content) VALUES (?, ?)',
+      [userId, content]
+    );
+
+    const newPostId = result.insertId; // Get the new post's ID
+
+    // Fetch the newly created post to return it
+    const [newPost] = await db.query(
+      `SELECT posts.*, users.username
+       FROM posts
+       JOIN users ON posts.user_id = users.id
+       WHERE posts.id = ?`,
+      [newPostId]
+    );
+
+    res.json(newPost[0]); // Return the newly created post
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error adding post.');
   }
-  
-  post.likes += 1;
-  res.json(post);
 });
 
-// POST: Add a comment to a post
-app.post('/api/posts/:id/comments', (req, res) => {
-  const postId = parseInt(req.params.id);
+
+// Route to like a post
+app.post('/api/posts/:postId/like', async (req, res) => {
+  const postId = req.params.postId;
+  try {
+    // Increment the likes for the given post
+    await db.query('UPDATE posts SET likes = likes + 1 WHERE id = ?', [postId]);
+    res.status(200).send('Post liked successfully.');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error liking post.');
+  }
+});
+
+// Route to add a comment to a post
+app.post('/api/posts/:postId/comment', async (req, res) => {
+  const postId = req.params.postId;
   const { comment } = req.body;
-  
+
   if (!comment) {
-    return res.status(400).json({ message: "Comment cannot be empty." });
+    return res.status(400).send('Comment cannot be empty.');
   }
-  
-  const post = posts.find(post => post.id === postId);
-  if (!post) {
-    return res.status(404).json({ message: "Post not found." });
+
+  try {
+    // Insert the comment into the comments table
+    await db.query('INSERT INTO comments (post_id, comment) VALUES (?, ?)', [postId, comment]);
+
+    res.status(200).send('Comment added successfully.');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error adding comment.');
   }
-  
-  post.comments.push(comment);
-  res.status(201).json(post);
 });
 
 // Start the server
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+app.listen(5000, () => {
+  console.log('Server running on http://localhost:5000');
 });
