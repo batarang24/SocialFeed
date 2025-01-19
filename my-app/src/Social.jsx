@@ -13,7 +13,7 @@ function Social() {
 
   // Fetch posts from the backend
   useEffect(() => {
-    axios.get('http://localhost:5000/api/posts')
+    axios.get('https://socialfeed-9l2w.onrender.com/api/posts')
       .then(response => {
         // Ensure that each post has a 'comments' field initialized to an empty array if undefined
         const updatedPosts = response.data.map(post => ({
@@ -28,7 +28,7 @@ function Social() {
   }, []);
 
   const handleLike = (postId) => {
-    axios.post(`http://localhost:5000/api/posts/${postId}/like`)
+    axios.post(`https://socialfeed-9l2w.onrender.com/api/posts/${postId}/like`)
       .then(response => {
         setPosts(posts.map(post => post.id === postId ? { ...post, likes: post.likes + 1 } : post));
       })
@@ -45,7 +45,7 @@ function Social() {
   
     const newPost = { userName, content: newPostContent };
   
-    axios.post('http://localhost:5000/api/posts', newPost)
+    axios.post('https://socialfeed-9l2w.onrender.com/api/posts', newPost)
       .then(response => {
         // Add the new post to the state (instead of just adding it to the array)
         setPosts(prevPosts => [response.data, ...prevPosts]);  // Prepend the new post to the list
@@ -62,7 +62,7 @@ function Social() {
       return;
     }
 
-    axios.post(`http://localhost:5000/api/posts/${postId}/comment`, { comment: newComment })
+    axios.post(`https://socialfeed-9l2w.onrender.com/api/posts/${postId}/comment`, { comment: newComment })
       .then(response => {
         setPosts(posts.map(post => {
           if (post.id === postId) {
