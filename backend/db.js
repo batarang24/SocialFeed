@@ -2,11 +2,11 @@ const mysql = require('mysql2');
 
 // Create a connection pool
 const pool = mysql.createPool({
-    host: 'sql107.infinityfree.com',
-    user: 'if0_38135226',
-    password: 'HEZlLgcxRFFI', // Enter your MySQL root password
-    database: 'social_feed',   // Database name
+    host: 'sql107.infinityfree.com',    // Use the MySQL hostname provided
+    user: 'if0_38135226',              // Your MySQL username
+    password: 'HEZlLgcxRFFI',          // Your MySQL password
+    database: 'if0_38135226_social_feed' // Your database name (replace XXX with actual DB name                      // Default MySQL port (3306) 
 });
 
-// Export the pool
-module.exports = pool.promise();
+
+module.exports=pool.promise();
