@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const db = require('./db'); // Import the MySQL connection
-console.log(db)
+
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
@@ -16,7 +16,15 @@ app.get('/api/posts', async (req, res) => {
        JOIN users ON posts.user_id = users.id 
        ORDER BY posts.id DESC`
     );
-    res.json(rows); // Send the posts with username to the client
+    // Fetch associated comments for each post
+    for (const post of rows) {
+      const [comments] = await db.query(
+        'SELECT comment FROM comments WHERE post_id = ?',
+        [post.id]
+      );
+      post.comments = comments.map(c => c.comment); // Add comments to the post
+    }
+    res.json(rows); // Send the posts with associated comments to the client
   } catch (err) {
     console.error(err);
     res.status(500).send('Error fetching posts.');
@@ -73,7 +81,6 @@ app.post('/api/posts', async (req, res) => {
     res.status(500).send('Error adding post.');
   }
 });
-
 
 // Route to like a post
 app.post('/api/posts/:postId/like', async (req, res) => {
