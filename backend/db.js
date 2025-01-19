@@ -1,13 +1,13 @@
 const mysql = require('mysql2');
 
-// Create a connection pool
 const pool = mysql.createPool({
-  host: 'localhost',      // Host from InfinityFree
-  user: 'root',               // Your MySQL username
-  password: '1234',           // Your MySQL password
-  database: 'social_feed',      // Your database name
- 
+    host: 'bru8ugwlafx2dl6karre-mysql.services.clever-cloud.com',      // Host from InfinityFree
+    user: 'uahwk01vguth3cir',               // Your MySQL username
+    password: 'wt2ZnhYI4fJ0aq8gRt6J',           // Your MySQL password
+    database: 'bru8ugwlafx2dl6karre',  
+    port:3306,    
+   
 });
 
-// Export the pool to be used in other parts of the app
+// Export the pool
 module.exports = pool.promise();
