@@ -4,7 +4,7 @@ const mysql = require('mysql2');
 const pool = mysql.createPool({
     host: 'sql107.infinityfree.com',
     user: 'if0_38135226',
-    password: 'Chandiran@5', // Enter your MySQL root password
+    password: 'HEZlLgcxRFFI', // Enter your MySQL root password
     database: 'social_feed',   // Database name
 });
 
