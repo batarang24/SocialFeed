@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const db = require('./db'); // Import the MySQL connection
-
+console.log(db)
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
